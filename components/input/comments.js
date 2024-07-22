@@ -1,21 +1,56 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import CommentList from './comment-list';
 import NewComment from './new-comment';
 import classes from './comments.module.css';
-
+import NotificationContext from '../../store/notification-context';
+import Notification from '../ui/notification';
 function Comments(props) {
   const { eventId } = props;
   const [loadedComments, setLoadedComments] = useState([]);
   const [showComments, setShowComments] = useState(false);
-
-
+  const notificationCtx = useContext(NotificationContext);
+  const [isFetchingComments, setIsFetchingComments] = useState(false);
+  let loadingNotification = {};
   const loadComments = async () => {
+    setIsFetchingComments(true)
+    loadingNotification = {
+      title: 'Loading',
+      message: 'Comments loading',
+      status: 'pending'
+    };
     fetch('/api/comment/' + eventId)
-      .then((resp) => resp.json())
-      .then((data) => {
-        console.log(data);
-        setLoadedComments(data.comments);
+      .then((resp) => {
+
+        if (!resp.ok) {
+          return response.json().then((data) => {
+            throw new Error(data.message || 'Something went wrong!');
+
+          });
+
+        }
+        else {
+          return resp.json()
+        }
       })
+      .then((data) => {
+
+        setLoadedComments(data.comments);
+        loadingNotification = {
+          title: 'Success',
+          message: 'Comments Loaded Successfully',
+          status: 'success'
+        };
+        setIsFetchingComments(false);
+      })
+      .catch((error) => {
+        loadingNotification = {
+          title: 'Error',
+          message: error,
+          status: 'error'
+        };
+        setIsFetchingComments(false);
+      });
+
   };
   function toggleCommentsHandler() {
     setShowComments((prevStatus) => !prevStatus);
@@ -27,7 +62,11 @@ function Comments(props) {
 
   const addCommentHandler = async (commentData) => {
     commentData.eventId = props.eventId;
-
+    notificationCtx.showNotification({
+      title: 'Saving',
+      message: 'Saving Comments',
+      status: 'pending'
+    })
     fetch('/api/comment/' + props.eventId, {
       method: 'POST',
       body: JSON.stringify(commentData),
@@ -43,10 +82,20 @@ function Comments(props) {
         }
         return response.json();
       })
-      .then(data => console.log(data))
+      .then(data => {
+        notificationCtx.showNotification({
+          title: 'Success',
+          message: 'Comment Saved successfully',
+          status: 'success'
+        });
+        console.log(data);
+      })
       .catch(error => {
-        console.error('Request failed:', error.message);
-        console.error('Error details:', error);
+        notificationCtx.showNotification({
+          title: 'Error',
+          message: eror,
+          status: 'error'
+        });
       });
 
 
@@ -64,7 +113,11 @@ function Comments(props) {
         {showComments ? 'Hide' : 'Show'} Comments
       </button>
       {showComments && <NewComment onAddComment={addCommentHandler} />}
-      {loadedComments && loadedComments.length > 0 && <CommentList items={loadedComments} />}
+      {loadedComments && loadedComments.length > 0 && !isFetchingComments && <CommentList items={loadedComments} />}
+      {loadComments && isFetchingComments && <Notification title={loadComments.title}
+        message={loadComments.message}
+        status={loadComments.status}
+      />}
     </section>
   );
 }

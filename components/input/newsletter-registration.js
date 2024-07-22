@@ -1,10 +1,22 @@
 import classes from './newsletter-registration.module.css';
-import { useRef } from 'react';
+import { useRef, useContext } from 'react';
+import NotificationContext from '../../store/notification-context';
 function NewsletterRegistration() {
   const inputEmailRef = useRef();
+
+  const notificationCtx = useContext(NotificationContext);
+
+
+  const submitData = async () => {
+
+  }
   const registrationHandler = async (event) => {
     event.preventDefault();
-
+    notificationCtx.showNotification({
+      title: 'signing users',
+      message: 'Registering user',
+      status: 'pending'
+    })
     const enteredEmail = inputEmailRef.current.value;
     const reqbody = {
       email: enteredEmail
@@ -19,15 +31,22 @@ function NewsletterRegistration() {
     })
     if (!res.ok) {
       const errordesc = await res.text();
-      console.log(errordesc)
+      notificationCtx.showNotification({
+        title: 'Error ',
+        message: ' Newsletter registration failed',
+        status: 'error'
+      })
     }
     else {
       const data = await res.json();
       console.log(data)
-
+      notificationCtx.showNotification({
+        title: 'Success',
+        message: ' Newsletter registration Done',
+        status: 'success'
+      })
     }
-    // optional: validate input
-    // send valid data to API
+
   };
 
   return (

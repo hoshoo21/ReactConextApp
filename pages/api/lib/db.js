@@ -2,7 +2,7 @@ const { MongoClient } = require('mongodb');
 
 const connectDB = async () => {
     try {
-        const url = '';
+        const url = 'mongodb+srv://naveedkasadu:Dw5vlcbF2qYQqxk7@cluster0.ibcgjfr.mongodb.net/';
         //"mongodb://localhost:27017/EventSystem"
         const client = new MongoClient(url);
         await client.connect();
